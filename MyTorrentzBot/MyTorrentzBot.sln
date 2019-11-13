@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29409.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyTorrentzBot", "MyTorrentzBot.csproj", "{9ACCE855-2114-4B30-92C4-BDA4E8D31C33}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9ACCE855-2114-4B30-92C4-BDA4E8D31C33}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9ACCE855-2114-4B30-92C4-BDA4E8D31C33}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9ACCE855-2114-4B30-92C4-BDA4E8D31C33}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9ACCE855-2114-4B30-92C4-BDA4E8D31C33}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {58B838C8-9A3C-4FAA-A697-1003E8B5FC34}
+	EndGlobalSection
+EndGlobal
