@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Telegram.Bot;
 using System.Threading.Tasks;
 using System.Data.SQLite;
@@ -66,10 +66,21 @@ namespace MyTorrentzBot
                     switch (command)
                     {
                         case "/start":
-                            SignUpUser(message.Chat.Id.ToString(), message.Chat.Username.ToString());
-                            await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
-                            Console.WriteLine($"Новый пользователь: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
-                            break;
+                            if(message.Chat.Username != null)
+                            {
+                                SignUpUser(message.Chat.Id.ToString(), message.Chat.Username.ToString());
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
+                                Console.WriteLine($"Новый пользователь: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
+                                break;
+                            }
+                            else
+                            {
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
+                                await bot.SendTextMessageAsync(message.Chat.Id, "У тебя не указан юзернейм в настройках аккаунта. Без него мы не сможем отслеживать твою историю запросов и предлагать самые сочные фильмы.");
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Укажи свой юзернейм и пропиши снова команду /start");
+                                Console.WriteLine($"Пользователь без юзернейма; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
+                                break;
+                            }
 
                         case "MyFirstBot":
                             Console.WriteLine($"Получено сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
@@ -87,7 +98,7 @@ namespace MyTorrentzBot
                             Registration(message.Chat.Id.ToString(), message.Chat.Username.ToString());
                             await bot.SendTextMessageAsync(message.Chat.Id, "Пользователь зарегистрирован");
                             Console.WriteLine("Зарегистрирован пользователь с ID: " + message.Chat.Username + " ; ID чата: " + message.Chat.Id + "  ; Дата, время(GMT 0): " + DateTime.UtcNow + "\n");
-                            break;*/
+                            break;
 
                         case "/find":
                             var filmTitle = string.Join(' ', args);
@@ -121,11 +132,43 @@ namespace MyTorrentzBot
                                 await bot.SendTextMessageAsync(message.Chat.Id, "Ничего не нашел. Попробовать еще раз?");
                             }
 
-                            break;
+                            break;*/
 
                         default:
-                            Console.WriteLine($"Получено незарегистрированное сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
+                            /*Console.WriteLine($"Получено незарегистрированное сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
                             //await bot.SendTextMessageAsync(message.Chat.Id, "Я не знаю такой команды. Воспользуйтесь функцией /help");
+                            break;*/
+                            var filmTitle = string.Join(' ', args);
+
+                            Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n; Film title: {filmTitle}");
+
+                            var regcmd = torrentsDb.CreateCommand();
+                            regcmd.CommandText = $"SELECT hash_info, title FROM torrent WHERE title LIKE '%{filmTitle}%' LIMIT 5";
+                            regcmd.Parameters.AddWithValue("@film_title", "Крестный отец");
+
+                            var dbReader = regcmd.ExecuteReader();
+                            if (dbReader.HasRows)
+                            {
+                                var sb = new StringBuilder();
+
+                                sb.AppendLine("Вот, что нашлось:");
+
+                                while (dbReader.Read())
+                                {
+                                    var description = dbReader.GetString(1);
+                                    var magnetHash = dbReader.GetString(0);
+
+                                    sb.AppendLine($"{description} **mаgnet:?xt=urn:btih:{dbReader.GetString(0)}**");
+                                    sb.AppendLine();
+                                }
+
+                                await bot.SendTextMessageAsync(message.Chat.Id, sb.ToString());
+                            }
+                            else
+                            {
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Ничего не нашел. Попробовать еще раз?");
+                            }
+
                             break;
                     }
 
@@ -138,7 +181,7 @@ namespace MyTorrentzBot
         {
             try
             {
-                usersDb = new SQLiteConnection("Data Source=DB.db; Version=3");
+                usersDb = new SQLiteConnection("Data Source=users.db; Version=3");
                 usersDb.Open();
                 
                 var regcmd = usersDb.CreateCommand();//Создаём команду добавления пользователя
