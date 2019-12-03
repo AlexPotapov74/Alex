@@ -17,6 +17,7 @@ namespace MyTorrentzBot
 
         private static SQLiteConnection usersDb;
         private static SQLiteConnection torrentsDb;
+        private static SQLiteConnection linksDb;
 
         private static void Main()
         {
@@ -27,6 +28,9 @@ namespace MyTorrentzBot
 
             torrentsDb = new SQLiteConnection("Data Source=torrents.db3; Version=3");
             torrentsDb.Open();
+            
+            linksDb = new SQLiteConnection("Data Source=links.db; Version=3");
+            linksDb.Open();
 
             while (true)
             {
@@ -69,13 +73,13 @@ namespace MyTorrentzBot
                             if(message.Chat.Username != null)
                             {
                                 SignUpUser(message.Chat.Id.ToString(), message.Chat.Username.ToString());
-                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
                                 Console.WriteLine($"Новый пользователь: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
                                 break;
                             }
                             else
                             {
-                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
+                                await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
                                 await bot.SendTextMessageAsync(message.Chat.Id, "У тебя не указан юзернейм в настройках аккаунта. Без него мы не сможем отслеживать твою историю запросов и предлагать самые сочные фильмы.");
                                 await bot.SendTextMessageAsync(message.Chat.Id, "Укажи свой юзернейм и пропиши снова команду /start");
                                 Console.WriteLine($"Пользователь без юзернейма; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
@@ -133,12 +137,23 @@ namespace MyTorrentzBot
                             }
 
                             break;*/
+                        case "magnet":
+                            var link = words[1];
+                            var comment = words[2];
+                            Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n");
+                            var addLink = linksDb.CreateCommand();
+                            addLink.CommandText = "INSERT INTO Links VALUES(@Link, @Comment)";
+                            addLink.Parameters.AddWithValue("@Link", link);
+                            addLink.Parameters.AddWithValue("@Comment", comment);
+                            addLink.ExecuteNonQuery();
+                            await bot.SendTextMessageAsync(message.Chat.Id, $"Комментарий _{comment}_ к ссылке `{link}` добавлен", ParseMode.Markdown);
+                            break;
 
                         default:
                             /*Console.WriteLine($"Получено незарегистрированное сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
                             //await bot.SendTextMessageAsync(message.Chat.Id, "Я не знаю такой команды. Воспользуйтесь функцией /help");
                             break;*/
-                            var filmTitle = string.Join(' ', args);
+                            var filmTitle = string.Join(' ', words);
 
                             Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n; Film title: {filmTitle}");
 
@@ -158,11 +173,11 @@ namespace MyTorrentzBot
                                     var description = dbReader.GetString(1);
                                     var magnetHash = dbReader.GetString(0);
 
-                                    sb.AppendLine($"{description} **mаgnet:?xt=urn:btih:{dbReader.GetString(0)}**");
+                                    sb.AppendLine($"{description}\n`mаgnet:?xt=urn:btih:{dbReader.GetString(0)}`");
                                     sb.AppendLine();
                                 }
 
-                                await bot.SendTextMessageAsync(message.Chat.Id, sb.ToString());
+                                await bot.SendTextMessageAsync(message.Chat.Id, sb.ToString(), ParseMode.Markdown);
                             }
                             else
                             {
