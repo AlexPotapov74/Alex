@@ -47,14 +47,13 @@ namespace MyTorrentzBot
 
         private static async Task HandleMessages()
         {
-            int offset = 0; // тупа нужно
-            int timeout = 0;
+            int offset = 0;
 
             await bot.SetWebhookAsync(""); //Убираем вебхук
 
             while (true)
             {
-                var updates = await bot.GetUpdatesAsync(offset, timeout); //Получили обновления
+                var updates = await bot.GetUpdatesAsync(offset); //Получили обновления
 
                 foreach (var update in updates)
                 {
@@ -70,7 +69,7 @@ namespace MyTorrentzBot
                     switch (command)
                     {
                         case "/start":
-                            if(message.Chat.Username != null)
+                            if (message.Chat.Username != null)
                             {
                                 SignUpUser(message.Chat.Id.ToString(), message.Chat.Username.ToString());
                                 await bot.SendTextMessageAsync(message.Chat.Id, "Приветствую, я Торрент бот, который облегчит тебе поиски фильмов, которые ты так хочешь посмотреть.\nВсе мои команды можешь узнать с помощью /help");
@@ -86,57 +85,11 @@ namespace MyTorrentzBot
                                 break;
                             }
 
-                        case "MyFirstBot":
-                            Console.WriteLine($"Получено сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
-                            await bot.SendTextMessageAsync(message.Chat.Id, "Привет, создатель, я твой бот!");
-                            await bot.SendTextMessageAsync(message.Chat.Id, "Сообщение отправлено пользователем - " + message.Chat.Username);
-                            break;
-
                         case "/help":
                             Console.WriteLine($"Получена команда: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
                             await bot.SendTextMessageAsync(message.Chat.Id, "Привет, сейчас я покажу тебе все свои возможности...");
                             await bot.SendTextMessageAsync(message.Chat.Id, "/find - позволит начать процесс поиска нужного тебе фильма;");
                             break;
-
-                        /*case "/reg":
-                            Registration(message.Chat.Id.ToString(), message.Chat.Username.ToString());
-                            await bot.SendTextMessageAsync(message.Chat.Id, "Пользователь зарегистрирован");
-                            Console.WriteLine("Зарегистрирован пользователь с ID: " + message.Chat.Username + " ; ID чата: " + message.Chat.Id + "  ; Дата, время(GMT 0): " + DateTime.UtcNow + "\n");
-                            break;
-
-                        case "/find":
-                            var filmTitle = string.Join(' ', args);
-
-                            Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n; Film title: {filmTitle}");
-
-                            var regcmd = torrentsDb.CreateCommand();
-                            regcmd.CommandText = $"SELECT hash_info, title FROM torrent WHERE title LIKE '%{filmTitle}%' LIMIT 5";
-                            regcmd.Parameters.AddWithValue("@film_title", "Крестный отец");
-
-                            var dbReader = regcmd.ExecuteReader();
-                            if (dbReader.HasRows)
-                            {
-                                var sb = new StringBuilder();
-
-                                sb.AppendLine("Вот, что нашлось:");
-
-                                while (dbReader.Read())
-                                {
-                                    var description = dbReader.GetString(1);
-                                    var magnetHash = dbReader.GetString(0);
-
-                                    sb.AppendLine($"{description} **mаgnet:?xt=urn:btih:{dbReader.GetString(0)}**");
-                                    sb.AppendLine();
-                                }
-
-                                await bot.SendTextMessageAsync(message.Chat.Id, sb.ToString());
-                            }
-                            else
-                            {
-                                await bot.SendTextMessageAsync(message.Chat.Id, "Ничего не нашел. Попробовать еще раз?");
-                            }
-
-                            break;*/
                         
                         case "magnet":
                             var link = words[1];
@@ -151,16 +104,13 @@ namespace MyTorrentzBot
                             break;
 
                         default:
-                            /*Console.WriteLine($"Получено незарегистрированное сообщение: {message.Text}; ID отправителя: {message.Chat.Username}; ID чата: {message.Chat.Id}; Дата,время(GMT 0): {DateTime.UtcNow}\n");
-                            //await bot.SendTextMessageAsync(message.Chat.Id, "Я не знаю такой команды. Воспользуйтесь функцией /help");
-                            break;*/
                             var filmTitle = string.Join(' ', words);
 
                             Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n; Film title: {filmTitle}");
 
                             var regcmd = torrentsDb.CreateCommand();
-                            regcmd.CommandText = $"SELECT hash_info, title FROM torrent WHERE title LIKE '%{filmTitle}%' LIMIT 5";
-                            regcmd.Parameters.AddWithValue("@film_title", "Крестный отец");
+                            regcmd.CommandText = $"SELECT hash_info, title FROM torrent WHERE title LIKE @film_title LIMIT 5";
+                            regcmd.Parameters.AddWithValue("@film_title", $"%{filmTitle}%");
 
                             var dbReader = regcmd.ExecuteReader();
                             if (dbReader.HasRows)
@@ -188,7 +138,7 @@ namespace MyTorrentzBot
                             break;
                     }
 
-                    offset = update.Id + 1; //чтобы не приходило много обновлений
+                    offset = update.Id + 1; // Чтобы не приходило много обновлений
                 }
             }
         }
@@ -197,16 +147,11 @@ namespace MyTorrentzBot
         {
             try
             {
-                usersDb = new SQLiteConnection("Data Source=users.db; Version=3");
-                usersDb.Open();
-                
-                var regcmd = usersDb.CreateCommand();//Создаём команду добавления пользователя
-                regcmd.CommandText = "INSERT INTO Regusers VALUES(@chatId, @username)";//Запрос на добавление пользователя
-                regcmd.Parameters.AddWithValue("@chatId", chatId);//Добавляем параметры
+                var regcmd = usersDb.CreateCommand(); // Создаём команду добавления пользователя
+                regcmd.CommandText = "INSERT INTO Regusers VALUES(@chatId, @username)"; // Запрос на добавление пользователя
+                regcmd.Parameters.AddWithValue("@chatId", chatId); // Добавляем параметры
                 regcmd.Parameters.AddWithValue("@username", username);
-                regcmd.ExecuteNonQuery();//Подставить и выполнить
-                
-                usersDb.Close();
+                regcmd.ExecuteNonQuery(); // Подставить и выполнить
             }
             catch (Exception ex)
             {
