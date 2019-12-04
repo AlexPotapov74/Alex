@@ -93,14 +93,14 @@ namespace MyTorrentzBot
                         
                         case "magnet":
                             var link = words[1];
-                            var comment = words[2];
+                            var comment = string.Join(' ', words.Skip(2));
                             Console.WriteLine($"Command: {command}; User: {message.Chat.Username}; Chat ID: {message.Chat.Id}; Time (GMT 0): {DateTime.UtcNow}\n");
                             var addLink = linksDb.CreateCommand();
                             addLink.CommandText = "INSERT INTO Links VALUES(@Link, @Comment)";
                             addLink.Parameters.AddWithValue("@Link", link);
                             addLink.Parameters.AddWithValue("@Comment", comment);
                             addLink.ExecuteNonQuery();
-                            await bot.SendTextMessageAsync(message.Chat.Id, $"Комментарий _{comment}_ к ссылке `{link}` добавлен", ParseMode.Markdown);
+                            await bot.SendTextMessageAsync(message.Chat.Id, $"Комментарий _{comment}_ к ссылке *{link}* добавлен", ParseMode.Markdown);
                             break;
 
                         default:
@@ -124,7 +124,7 @@ namespace MyTorrentzBot
                                     var description = dbReader.GetString(1);
                                     var magnetHash = dbReader.GetString(0);
 
-                                    sb.AppendLine($"{description}\n`mаgnet:?xt=urn:btih:{dbReader.GetString(0)}`");
+                                    sb.AppendLine($"{description}\n*mаgnet:?xt=urn:btih:{dbReader.GetString(0)}*");
                                     sb.AppendLine();
                                 }
 
